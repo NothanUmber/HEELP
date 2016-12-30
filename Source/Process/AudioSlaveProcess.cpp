@@ -42,7 +42,7 @@ namespace
 
 struct AudioSlaveProcess::Pimpl : MessageListener
 {
-    Pimpl(HeelpChildApplication* app) : app_(app)
+    Pimpl(AudioSlaveProcess* parent, HeelpChildApplication* app) : parent_(parent), app_(app)
     {
     }
 
@@ -53,6 +53,7 @@ struct AudioSlaveProcess::Pimpl : MessageListener
         
         if (type == AudioProcessMessageTypes::AUDIODEVICEMANAGER_STATE)
         {
+            LOG("Received from master " << AudioProcessMessageTypes::AUDIODEVICEMANAGER_STATE);
             postMessage(new AudioSlaveEventsMessage(initialiseAudio, msg));
         }
     }
@@ -74,6 +75,9 @@ struct AudioSlaveProcess::Pimpl : MessageListener
     
     void handleConnectionMade()
     {
+        LOG("Slave connection made, sending " << AudioProcessMessageTypes::AUDIOSLAVEPROCESS_READY);
+        ValueTree msg(AudioProcessMessageTypes::AUDIOSLAVEPROCESS_READY);
+        parent_->sendMessageToMaster(valueTreeToMemoryBlock(msg));
     }
     
     void handleConnectionLost()
@@ -81,11 +85,12 @@ struct AudioSlaveProcess::Pimpl : MessageListener
         JUCEApplication::quit();
     }
     
+    AudioSlaveProcess* parent_;
     HeelpChildApplication* app_;
 };
 
-AudioSlaveProcess::AudioSlaveProcess(HeelpChildApplication* app)  : pimpl_(new Pimpl(app))  {}
-AudioSlaveProcess::~AudioSlaveProcess()                                                     { pimpl_ = nullptr; }
+AudioSlaveProcess::AudioSlaveProcess(HeelpChildApplication* app)  : pimpl_(new Pimpl(this, app))    {}
+AudioSlaveProcess::~AudioSlaveProcess()                                                             { pimpl_ = nullptr; }
 
 void AudioSlaveProcess::handleMessageFromMaster(const MemoryBlock& mb)  { pimpl_->handleMessageFromMaster(mb); }
 void AudioSlaveProcess::handleConnectionMade()                          { pimpl_->handleConnectionMade(); }

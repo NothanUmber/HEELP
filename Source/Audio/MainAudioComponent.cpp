@@ -35,17 +35,34 @@ namespace
         float* const sharedAudioBuffer_;
         float* const localAudioBuffer_;
         bool started_;
+        bool silent_;
         long lastFinishedBuffer_;
     };
 }
 
-struct MainAudioComponent::Pimpl : public AudioAppComponent
+namespace
+{
+    enum MainAudioComponentEventsMessageType
+    {
+        registeredChildrenUpdated
+    };
+
+    struct MainAudioComponentEventsMessage : Message
+    {
+        MainAudioComponentEventsMessage(const MainAudioComponentEventsMessageType type) : type_(type) {}
+        ~MainAudioComponentEventsMessage() {}
+
+        const MainAudioComponentEventsMessageType type_;
+    };
+}
+
+struct MainAudioComponent::Pimpl : AudioAppComponent, MessageListener
 {
     Pimpl(HeelpMainApplication* mainApplication) : mainApplication_(mainApplication), paused_(true)
     {
         setAudioChannels(0, NUM_AUDIO_CHANNELS);
     }
-
+    
     ~Pimpl()
     {
         shutdownAudio();
@@ -61,7 +78,7 @@ struct MainAudioComponent::Pimpl : public AudioAppComponent
     {
         paused_ = true;
     }
-
+    
     void resume()
     {
         ScopedReadLock g(childInfosLock_);
@@ -72,12 +89,14 @@ struct MainAudioComponent::Pimpl : public AudioAppComponent
         
         paused_ = false;
     }
-
+    
     void registerChild(int childId, SharedMemory* shm, float* localBuffer)
     {
-        ChildInfo childInfo = {shm, (ChildAudioState*)shm->getShmAddress(), (float*)(shm->getShmAddress() + sizeof(ChildAudioState)), localBuffer, false, -1};
+        ChildInfo childInfo = {shm, (ChildAudioState*)shm->getShmAddress(), (float*)(shm->getShmAddress() + sizeof(ChildAudioState)), localBuffer, false, true, -1};
         ScopedWriteLock g(childInfosLock_);
         childInfos_.insert(std::pair<int, ChildInfo>{childId, childInfo});
+        LOG("Child " << childId << " : registered, now " << String(childInfos_.size()) << " children active");
+        postMessage(new MainAudioComponentEventsMessage(registeredChildrenUpdated));
     }
     
     void unregisterChild(int childId)
@@ -87,10 +106,26 @@ struct MainAudioComponent::Pimpl : public AudioAppComponent
         if (it != childInfos_.end())
         {
             childInfos_.erase(it);
-            LOG("Deleted child " << String(childId) << " : " << String(childInfos_.size()) << " children remaining");
+            LOG("Child " << childId << " : unregistered, now " << String(childInfos_.size()) << " children active");
         }
+        postMessage(new MainAudioComponentEventsMessage(registeredChildrenUpdated));
     }
-    
+
+    void handleMessage(const Message& message)
+    {
+        MainAudioComponentEventsMessage* msg = (MainAudioComponentEventsMessage*)&message;
+        switch (msg->type_)
+        {
+            case registeredChildrenUpdated:
+            {
+                mainApplication_->setRegisteredChildrenCount((int)childInfos_.size());
+                break;
+            }
+            default:
+                break;
+       }
+    }
+
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate)
     {
         LOG("Preparing to play audio..." << newLine <<
@@ -100,94 +135,90 @@ struct MainAudioComponent::Pimpl : public AudioAppComponent
     
     void getNextAudioBlock(const AudioSourceChannelInfo& bufferToFill)
     {
+        AudioSampleBuffer* outputBuffer = bufferToFill.buffer;
+        outputBuffer->clear();
+        
         if (paused_.get())
         {
             return;
         }
-
-        int totalBufferSize = NUM_AUDIO_CHANNELS * bufferToFill.numSamples;
-
-        bool childrenDone;
-        do
-        {
-            childrenDone = true;
-            
-            {
-                ScopedReadLock g(childInfosLock_);
-                for (auto it = childInfos_.begin(); it != childInfos_.end(); ++it)
-                {
-                    int childId = it->first;
-                    ChildInfo& childInfo = it->second;
-                    
-                    if (!childInfo.started_)
-                    {
-                        childInfo.started_ = true;
-                        mainApplication_->startChildProcessAudio(childId);
-                        childrenDone = false;
-                    }
-                    else
-                    {
-                        childInfo.state_->ready_ = true;
-                        if (childInfo.lastFinishedBuffer_ == childInfo.state_->finishedBuffer_)
-                        {
-//                          LOG("child " << childId << " not done : lastFinishedBuffer_=" << childInfo.lastFinishedBuffer_ << " finishedBuffer_=" << childInfo.state_->finishedBuffer_);
-                            for (int i = 0; i < totalBufferSize; ++i)
-                            {
-                                childInfo.localAudioBuffer_[i] = 0.0f;
-                            }
-                            childrenDone = false;
-                        }
-                    }
-                }
-            }
-            
-            if (childrenDone)
-            {
-                ScopedReadLock g(childInfosLock_);
-                for (auto it = childInfos_.begin(); it != childInfos_.end(); ++it)
-                {
-                    ChildInfo& childInfo = it->second;
-                    childInfo.lastFinishedBuffer_ = childInfo.state_->finishedBuffer_;
-                }
-                break;
-            }
-            
-            // TODO: might want to find something better than waiting for at least a millisecond to continue
-            Thread::sleep(1);
-        }
-        while (true);
         
+        // if a child is registered, but the audio hasn't started yet, do so
+        // and silence its output for this audio callback, given it time
+        // to start up
         {
             ScopedReadLock g(childInfosLock_);
             for (auto it = childInfos_.begin(); it != childInfos_.end(); ++it)
             {
+                int childId = it->first;
                 ChildInfo& childInfo = it->second;
-                memcpy(childInfo.localAudioBuffer_, &childInfo.sharedAudioBuffer_[childInfo.state_->finishedBuffer_ * totalBufferSize], totalBufferSize * sizeof(float));
+            
+                if (!childInfo.started_)
+                {
+                    childInfo.started_ = true;
+                    mainApplication_->startChildProcessAudio(childId);
+                    childInfo.silent_ = true;
+                }
+                else if (childInfo.silent_)
+                {
+                    childInfo.silent_ = false;
+                }
             }
         }
         
-        AudioSampleBuffer* outputBuffer = bufferToFill.buffer;
-        outputBuffer->clear();
+        // this is sort of a spin-lock that waits for the children's changes to the
+        // shared memory the become visible to the main process
+        bool sharedMemoryChangesAreVisible;
+        do
+        {
+            sharedMemoryChangesAreVisible = true;
+            
+            ScopedReadLock g(childInfosLock_);
+            for (auto it = childInfos_.begin(); it != childInfos_.end(); ++it)
+            {
+                ChildInfo& childInfo = it->second;
+                if (childInfo.silent_) continue;
+                
+                childInfo.state_->ready_ = true;
+                if (childInfo.lastFinishedBuffer_ == childInfo.state_->finishedBuffer_)
+                {
+                    sharedMemoryChangesAreVisible = false;
+                }
+            }
+            
+            if (sharedMemoryChangesAreVisible)
+            {
+                break;
+            }
+        }
+        while (true);
         
-        int startSample = 0;
-        int numSamples = bufferToFill.numSamples;
+        // collected the audio data from each child and remember what the last finished
+        // buffer index was in oreder to be able to check the shared memroy visibily
+        // in the next audio callback execution of the main process
         {
             ScopedReadLock g(childInfosLock_);
-            while (--numSamples >= 0)
+            
+            int totalBufferSize = NUM_AUDIO_CHANNELS * bufferToFill.numSamples;
+            for (auto it = childInfos_.begin(); it != childInfos_.end(); ++it)
             {
+                ChildInfo& childInfo = it->second;
+                if (childInfo.silent_) continue;
+                
+                childInfo.lastFinishedBuffer_ = childInfo.state_->finishedBuffer_;
+                memcpy(childInfo.localAudioBuffer_, &childInfo.sharedAudioBuffer_[childInfo.state_->finishedBuffer_ * totalBufferSize], totalBufferSize * sizeof(float));
+                
+                // sum the audio of all the children together and output it to the audio interface
+                // this is just temporary as they should be summed into aux busses instead, the main
+                // audio process doesn't have a master bus
                 for (int chan = outputBuffer->getNumChannels(); --chan >= 0;)
                 {
-                    for (auto it = childInfos_.begin(); it != childInfos_.end(); ++it)
-                    {
-                        ChildInfo& childInfo = it->second;
-                        outputBuffer->addSample(chan, startSample, childInfo.localAudioBuffer_[chan * bufferToFill.numSamples + startSample]);
-                    }
+                    outputBuffer->addFrom(chan, 0, &childInfo.localAudioBuffer_[chan * bufferToFill.numSamples], bufferToFill.numSamples);
                 }
-                ++startSample;
             }
         }
     }
-
+    
     void releaseResources()
     {
         LOG("Releasing audio resources");

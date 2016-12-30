@@ -27,6 +27,7 @@
 #include "Process/AudioProcessMessageTypes.h"
 #include "Process/AudioProcessMessageUtils.h"
 #include "Process/SharedMemory.h"
+#include "UI/MainContentComponent.h"
 #include "UI/MainWindow.h"
 
 #include <map>
@@ -114,7 +115,7 @@ struct HeelpMainApplication::Pimpl : public ChangeListener
         if (dm.getCurrentDeviceTypeObject() && dm.getCurrentAudioDevice())
         {
             // TODO : these should become proper channels, just generating four to test with now
-            for (int childId = 1; childId <= 8; ++childId)
+            for (int childId = 1; childId <= 10; ++childId)
             {
                 launchChildProcess(childId);
             }
@@ -157,10 +158,8 @@ struct HeelpMainApplication::Pimpl : public ChangeListener
         {
             sharedAudioBuffer[i] = 0.0f;
         }
-        
-        // register child and launch it
-        audio_->registerChild(childId, shm, localAudioBuffer);
-        
+
+        // launch the child process
         AudioMasterProcess* masterProcess = new AudioMasterProcess(parent_, childId);
         {
             ScopedWriteLock g(masterProcessInfosLock_);
@@ -170,10 +169,21 @@ struct HeelpMainApplication::Pimpl : public ChangeListener
         StringArray args;
         args.add(HeelpChildApplication::CMD_ARG_CHILDID+String(childId));
         args.add(HeelpChildApplication::CMD_ARG_SHMINFO+String(shm->getShmInfo()));
-        LOG("Launching child " << childId << " with shared memory info " << shm->getShmInfo());
+        LOG("Child " << childId << " : launching with shared memory info " << shm->getShmInfo());
         if (masterProcess->launchSlaveProcess(File::getSpecialLocation(File::currentExecutableFile), audioCommandLineUID, args))
         {
-            LOG("Child process started");
+            LOG("Child " << childId << " : process started");
+        }
+    }
+    
+    void childProcessIsActive(int childId)
+    {
+        ScopedWriteLock g(masterProcessInfosLock_);
+        auto it = masterProcessInfos_.find(childId);
+        if (it != masterProcessInfos_.end())
+        {
+            MasterProcessInfo& info = it->second;
+            audio_->registerChild(childId, info.shm_, info.localBuffer_);
         }
     }
     
@@ -182,7 +192,7 @@ struct HeelpMainApplication::Pimpl : public ChangeListener
         AudioMasterProcess* masterProcess = nullptr;
         {
             ScopedWriteLock g(masterProcessInfosLock_);
-            std::map<int, MasterProcessInfo>::iterator it = masterProcessInfos_.find(childId);
+            auto it = masterProcessInfos_.find(childId);
             if (it != masterProcessInfos_.end())
             {
                 masterProcess = it->second.process_;
@@ -193,19 +203,19 @@ struct HeelpMainApplication::Pimpl : public ChangeListener
             return;
         }
         
-        ValueTree message(AudioProcessMessageTypes::AUDIODEVICEMANAGER_STATE);
+        ValueTree msg(AudioProcessMessageTypes::AUDIODEVICEMANAGER_STATE);
         AudioDeviceManager& dm = audio_->getDeviceManager();
         if (dm.getCurrentAudioDevice())
         {
             AudioDeviceManager::AudioDeviceSetup setup;
             dm.getAudioDeviceSetup(setup);
   
-            message.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_INPUTNAME, setup.inputDeviceName, nullptr);
-            message.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_OUTPUTNAME, setup.outputDeviceName, nullptr);
-            message.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_SAMPLERATE, setup.sampleRate, nullptr);
-            message.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_BUFFERSIZE, setup.bufferSize, nullptr);
+            msg.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_INPUTNAME, setup.inputDeviceName, nullptr);
+            msg.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_OUTPUTNAME, setup.outputDeviceName, nullptr);
+            msg.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_SAMPLERATE, setup.sampleRate, nullptr);
+            msg.setProperty(AudioProcessMessageProperties::AUDIO_DEVICE_BUFFERSIZE, setup.bufferSize, nullptr);
         }
-        masterProcess->sendMessageToSlave(valueTreeToMemoryBlock(message));
+        masterProcess->sendMessageToSlave(valueTreeToMemoryBlock(msg));
     }
     
     void killAllChildren()
@@ -226,12 +236,12 @@ struct HeelpMainApplication::Pimpl : public ChangeListener
         audio_->unregisterChild(childId);
         
         ScopedWriteLock g(masterProcessInfosLock_);
-        std::map<int, MasterProcessInfo>::iterator it = masterProcessInfos_.find(childId);
+        auto it = masterProcessInfos_.find(childId);
         if (it != masterProcessInfos_.end())
         {
             it->second.destruct();
             masterProcessInfos_.erase(it);
-            LOG("Child process killed");
+            LOG("Child " << childId << " : process killed");
         }
     }
 
@@ -279,6 +289,9 @@ HeelpMainApplication::~HeelpMainApplication()                           { pimpl_
 bool HeelpMainApplication::initialise(const String& commandLine)        { return pimpl_->initialise(commandLine); }
 void HeelpMainApplication::shutdown()                                   { pimpl_->shutdown(); }
 AudioDeviceManager* HeelpMainApplication::getAudioDeviceManager() const { return pimpl_->getAudioDeviceManager(); }
+
+void HeelpMainApplication::setRegisteredChildrenCount(int count)        { ((MainContentComponent*)pimpl_->mainWindow_->getContentComponent())->setRegisteredChildrenCount(count); }
 void HeelpMainApplication::launchChildProcess(int childId)              { pimpl_->launchChildProcess(childId); }
+void HeelpMainApplication::childProcessIsActive(int childId)            { pimpl_->childProcessIsActive(childId); }
 void HeelpMainApplication::startChildProcessAudio(int childId)          { pimpl_->startChildProcessAudio(childId); }
 void HeelpMainApplication::killChildProcess(int childId)                { pimpl_->killChildProcess(childId); }
