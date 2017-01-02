@@ -78,6 +78,7 @@ struct MainAudioComponent::Pimpl : AudioSource, MessageListener
     
     void pause()
     {
+		ScopedWriteLock g(preventShutdownLock_);
         paused_ = true;
     }
     
@@ -158,6 +159,8 @@ struct MainAudioComponent::Pimpl : AudioSource, MessageListener
         AudioSampleBuffer* outputBuffer = bufferToFill.buffer;
         outputBuffer->clear();
         
+		ScopedReadLock g(preventShutdownLock_);
+
         if (paused_.get())
         {
             return;
@@ -216,6 +219,10 @@ struct MainAudioComponent::Pimpl : AudioSource, MessageListener
             {
                 break;
             }
+			if (childInfos_.empty() || paused_.get())
+			{
+				return;
+			}
         }
         while (true);
         
@@ -248,11 +255,13 @@ struct MainAudioComponent::Pimpl : AudioSource, MessageListener
     void releaseResources()
     {
         LOG("Releasing audio resources");
+		pause();
     }
     
     HeelpMainApplication* const mainApplication_;
     Atomic<int> paused_;
     ReadWriteLock childInfosLock_;
+	ReadWriteLock preventShutdownLock_;
     std::map<int, ChildInfo> childInfos_;
 
     AudioSourcePlayer audioSourcePlayer_;

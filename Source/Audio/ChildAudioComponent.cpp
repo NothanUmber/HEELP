@@ -74,6 +74,8 @@ struct ChildAudioComponent::Pimpl : public AudioSource
     
     void shutdownAudio()
     {
+		ScopedWriteLock g(preventShutdown_);
+		state_->ready_ = false;
         audioSourcePlayer_.setSource(nullptr);
         deviceManager_.removeAudioCallback(&audioSourcePlayer_);
         deviceManager_.closeAudioDevice();
@@ -98,6 +100,7 @@ struct ChildAudioComponent::Pimpl : public AudioSource
 
     void getNextAudioBlock(const AudioSourceChannelInfo& bufferToFill)
     {
+		ScopedReadLock g(preventShutdown_);
         if (!state_->ready_)
         {
             return;
@@ -166,6 +169,7 @@ struct ChildAudioComponent::Pimpl : public AudioSource
     void releaseResources()
     {
         LOG("Releasing audio resources");
+		shutdownAudio();
     }
     
     Random rnd_;
@@ -177,6 +181,7 @@ struct ChildAudioComponent::Pimpl : public AudioSource
     
     AudioDeviceManager deviceManager_;
     AudioSourcePlayer audioSourcePlayer_;
+	ReadWriteLock preventShutdown_;
 };
     
 ChildAudioComponent::ChildAudioComponent(int childId, SharedMemory* shm) : pimpl_(new Pimpl(childId, shm))  {}
