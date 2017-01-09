@@ -1,0 +1,68 @@
+/*
+Description of layout
+*/
+{
+	"Version" : "1", // always 1 for the moment
+
+	"Panels" : { // used to define virtual panels made from subpanels - can be used to "tile" bigger panels together from smaller ones
+		"virtualPanelName" : { // any name
+			"subpanels" : ["subpanel1", "subpanel2", ...], //existing physical panels: morph1-morph10
+			// options for other physical panels: linnstrument1.1-linnstrument10.8 (each linnstrument row is an own physical panel, format: instrument.row), seaboard1-seaboard10, continuum1-continuum10
+			"transitionArea" : { // There might be a small gap between pysical panels without or with limitied  (=inconsistent) touch sensitivity.
+				// To allow continuous parameter bends accross boundaries a transition area can be defined where the finger position is interpolated on the way
+				// through the area based on the x/y/z velocity when entering the area.
+				"width" : n, // width of horizontal transition area in mm on one panel (so the transition area width is 2x this width). Default: 0
+				"height" : n // height of vertical transition area in mm on one panel (so the transition area height is 2x this height). Default: 0
+				"interpolateX" : true|false, // if true then the x coordinate is linearly interpolated horizontally based on the last movement velocity outside the transition area. Default: false
+				"interpolateY" : true|false, // if true then the y coordinate is linearly interpolated vertically based on the last movement velocity outside the transition area. Default: false
+				"interpolateZ" : true|false, // if true then the z coordinate is linearly interpolated based on the last pressure velocity outside the transition area. Default: false
+				"additionalTransitTime" : n // this time in ms is added to the calculated expected transit time (based on entry velocity). If no further event is measured after
+				// calculated transit time + additionalTransitTime then the finger is considered "off-board" (so a note-off event is sent)
+			}
+		}
+	},
+	"3DAreas" : { // 3D areas are rectangular areas where 3 controller values can be assigned to x/y/z touch coordinates (and velocity can be sent for initial touch). Various pitch rounding options are offered
+		"areaname" : { // an arbitrary name
+			"panel" : "a panel",  // panel to use (either a predefined physical or a virtual one)
+			"x" : n, // position, width and height
+			"y" : n,
+			"width" : n,
+			"height" : n,
+			"midimode" : "MPE7bit", // output format. Supported options: MPE7bit, MPE14bit, TODO
+			"anAxis" : { // supported axis: xAxis, yAxis, zAxis
+				"event": "eventtype", // supported eventtypes: pitch, CC1-CC127, channelAT
+				"start" : "startvalue", // for MPE7bit and CCs a value between 0-127, for MPE14bit and CCs a value between 0-16383, for pitch either a cent value between 0-12000 or a note value between c0-c10
+				"end" : "endvalue",
+				"enabled" : true // enable or disable creation of events for this axis. Default: true
+			},
+			"sendVelocity" : true, // send velocity at initial touch or not. Default: true
+			"PitchRounding" : { // allows to define areas inside a 3DArea where pitch is rounded - either at initial touch, towards the destination pitch based on x/y/z velocity or time based (round to destination pitch within n ms)
+				"a rounding group name" : { //any name
+					"type" : "rectangular"|"hexCornerVertical"|"hexCornerHorizontal", // the rounding area can have recengular or hex cells (for hex the "pointy corner" can either be in vertical or horizontal direction)
+					"x" : 0, // start position (upper left corner) and width and height (lower right corner)
+					"y" : 0,
+					"width" : 960,
+					"height" : 21.667,
+					"keywidths" : [20], // width of one "key"-cell (is repeated for the entire width of the pitchrounding area)
+					"pitchOffsets" : [100], // pitch offset in cent between adjacent cells (is repeated for the entire width of the pitchrounding area)
+					"roundInitialTouch" : true, // round pitch to cell-pitch on initial touch. Default: true
+					"roundTimeWhenInside" : -1, // linearly interpolate current pitch to cell-pitch so it reaches cell-pitch in roundTimeWhenInside ms. -1 means no time-based rounding is happening. Default: -1
+					"roundBasedOnXVelocity" : true, // interpolate current pitch to cell-pitch according to x/y/z velocity vector. So if the velocity vector points to the opposite of the cell-pitch then no rounding is happening
+					"template" : "another pitch rounding area", // take over all settings that are not explicitly specified in this pitch rounding area from the indicated area. Default: ""
+				}
+			}
+		}
+	},
+	"Buttons" : { // allows to define buttons that can trigger configuration changes
+		"a button name" : { // any name
+			"panel" : "a panel", // panel on which the button should be placed
+			"x" : n, // button position and dimensions
+			"y" : n,
+			"width" : n,
+			"height" : n,
+			"commands" : ["command 1", "command2",...] // list of assignments of e.g. 3DArea properties to new values.
+			//"=" assigns a new value, "-|+|*|/=" subtracts|adds|multiplies|divides the current value by a constant
+			// additional to 3DAreas the l-value System.programChange is available. Assigning a constant 0-127 to that value will trigger a program change
+		}
+	}
+}

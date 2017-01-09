@@ -1,0 +1,228 @@
+/*
+Continuano with expression mapped to full yAxis
+*/
+{
+	"Version" : "1",
+
+	// overlay specification
+	"Panels" : {
+		"keybed" : {
+			"subpanels" : ["morph1", "morph2", "morph3", "morph4"], //virtual panel built out of 4 horizontally stacked physical panels
+			"transitionArea" : {
+				"width" : 5, // in mm
+				"interpolateX" : true,
+				"interpolateZ" : true,
+				"additionalTransitTime" : 500 // in ms 
+			}
+		},
+		"config" : {
+			"subpanels" : "morph5"
+		}
+	},
+	"3DAreas" : {
+		"main" : {
+			"panel" : "keybed",
+			"x" : 0,
+			"y" : 0,
+			"width" : 960,
+			"height" : 130,
+			"midimode" : "MPE14bit",
+			"xAxis" : {
+				"event": "pitch",
+				"start" : "c2",
+				"end" : "h7",
+				"enabled" : true
+			},
+			"yAxis" : {
+				"event": "CC1",
+				"start" : "16383",
+				"end" : "0",
+				"enabled" : true
+			},
+			"zAxis" : {
+				"event": "channelAT",
+				"start" : "0",
+				"end" : "16383",
+				"enabled" : true
+			},
+			"sendVelocity" : true,
+			"PitchRounding" : {
+				"continuous" : { // rounding disabled by default, already prepared for quartertone rounding
+					"x" : 0,
+					"y" : 0,
+					"width" : 960,
+					"height" : 43.333,
+					"keywidths" : [6.666],
+					"pitchOffsets" : [50],
+					"roundInitialTouch" : false,
+					"roundTimeWhenInside" : -1, // ms
+					"roundBasedOnXVelocity" : false
+				},
+				"chromatic" : {
+					"x" : 0,
+					"y" : 43.333,
+					"width" : 960,
+					"height" : 43.333,
+					"keywidths" : [13.333],
+					"pitchOffsets" : [100],
+					"roundInitialTouch" : true,
+					"roundTimeWhenInside" : -1, // ms
+					"roundBasedOnXVelocity" : true
+				},
+				"diatonic" : {
+					"x" : 0,
+					"y" : 86.666,
+					"width" : 960,
+					"height" : 43.333,
+					"keywidths" : [22.222,22.222,22.222,23.333,23.333,23.333,23.333],
+					"pitchOffsets" : [200,200,100,200,200,200,200],
+					"roundInitialTouch" : true,
+					"roundTimeWhenInside" : -1, // ms
+					"roundBasedOnXVelocity" : true
+				}
+			}
+		}
+	},
+	"Buttons" : {
+		"disable rounding" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.PitchRounding.*.roundInitialTouch = false",
+				"3DAreas.main.PitchRounding.*.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.*.roundBasedOnXVelocity = false"
+			]
+		},
+		"standard pitch rounding" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [	
+				"3DAreas.main.PitchRounding.continuous.roundInitialTouch = false",
+				"3DAreas.main.PitchRounding.continuous.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.continuous.roundBasedOnXVelocity = false",
+				"3DAreas.main.PitchRounding.chromatic.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.chromatic.roundBasedOnXVelocity = true",
+				"3DAreas.main.PitchRounding.diatonic.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.diatonic.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.diatonic.roundBasedOnXVelocity = true",
+			]
+		},
+		"pitch rounding with quartertones" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.PitchRounding.continuous.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.continuous.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.continuous.roundBasedOnXVelocity = true",
+				"3DAreas.main.PitchRounding.chromatic.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.chromatic.roundBasedOnXVelocity = true",
+				"3DAreas.main.PitchRounding.diatonic.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.diatonic.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.diatonic.roundBasedOnXVelocity = true",
+			]
+		},
+		"enable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = true",
+			]		
+		},
+		"disable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = false",
+			]		
+		},
+		"enable zAxis" : {
+			"panel" : "config",
+			"x" : 55,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = true",
+			]		
+		},
+		"disable zAxis" : {
+			"panel" : "config",
+			"x" : 70,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = false",
+			]		
+		},
+		"transpose up" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.xAxis.start += 1200",
+				"3DAreas.main.xAxis.end += 1200"
+			]
+		},
+		"transpose down" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.xAxis.start -= 1200",
+				"3DAreas.main.xAxis.end -= 1200"
+			]
+		},
+		"send program change 1" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 1"
+			]
+ 		},
+ 		"send program change 2" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 2"
+			]
+ 		},
+ 		"load Continuano_yControl_per_zone preset" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 55,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.load = Continuano_yControl_per_zone.json"
+			]
+ 		}
+	}
+}

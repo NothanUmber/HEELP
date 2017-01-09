@@ -1,0 +1,247 @@
+/*
+Grid with 4th between rows (like LinnStrument)
+*/
+{
+	"Version" : "1",
+
+	// overlay specification
+	"Panels" : {
+		"keybed" : {
+			"subpanels" : ["morph1", "morph2", "morph3", "morph4"], //virtual panel built out of 4 horizontally stacked physical panels
+			"transitionArea" : {
+				"width" : 5, // in mm
+				"interpolateX" : true,
+				"interpolateZ" : true,
+				"maxTransitTime" : 500 // in ms 
+			}
+		},
+		"config" : {
+			"subpanels" : "morph5"
+		}
+	},
+	"3DAreas" : {
+		"1" : {
+			"panel" : "keybed",
+			"x" : 0,
+			"y" : 113.75,
+			"width" : 960,
+			"height" : 16.25,
+			"midimode" : "MPE7bit",
+			"xAxis" : {
+				"event": "pitch",
+				"start" : "c3",
+				"end" : "c4",
+				"enabled" : true
+			},
+			"yAxis" : {
+				"event": "CC1",
+				"start" : "127",
+				"end" : "0",
+				"enabled" : true
+			},
+			"zAxis" : {
+				"event": "channelAT",
+				"start" : "0",
+				"end" : "127",
+				"enabled" : true
+			},
+			"sendVelocity" : true,
+			"PitchRounding" : {
+				"chromatic" : {
+					"x" : 0,
+					"y" : 0,
+					"width" : 960,
+					"height" : 16.25,
+					"keywidths" : [20],
+					"pitchOffsets" : [100],
+					"roundInitialTouch" : true,
+					"roundTimeWhenInside" : -1, // ms
+					"roundBasedOnXVelocity" : true
+				}
+			}
+		},
+		"2" : {
+			"template" : "1",
+			"y" : 97.5,
+			"xAxis" : {
+				"event" : "pitch",
+				"start" : "f3",
+				"end" : "f4"
+			}
+		},
+		"3" : {
+			"template" : "1",
+			"y" : 81.25,
+			"xAxis" : {
+				"event" : "pitch",
+				"start" : "b3",
+				"end" : "b4"
+			}
+		},
+		"4" : {
+			"template" : "1",
+			"y" : 65,
+			"xAxis" : {
+				"event" : "pitch",
+				"start" : "es4",
+				"end" : "es5"
+			}
+		},
+		"5" : {
+			"template" : "1",
+			"y" : 48.25,
+			"xAxis" : {
+				"event" : "pitch",
+				"start" : "as4",
+				"end" : "as5"
+			}
+		},
+		"6" : {
+			"template" : "1",
+			"y" : 32.5,
+			"xAxis" : {
+				"event" : "pitch",
+				"start" : "des5",
+				"end" : "des6"
+			}
+		},
+		"7" : {
+			"template" : "1",
+			"y" : 16.25,
+			"xAxis" : {
+				"event" : "pitch",
+				"start" : "ges5",
+				"end" : "ges6"
+			}
+		},
+		"8" : {
+			"template" : "1",
+			"y" : 0,
+			"xAxis" : {
+				"event" : "pitch",
+				"start" : "h5",
+				"end" : "h6"
+			}
+		}
+	},
+	"Buttons" : {
+		"disable rounding" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.*.PitchRounding.chromatic.roundInitialTouch = false",
+				"3DAreas.*.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.*.PitchRounding.chromatic.roundBasedOnXVelocity = false",
+			]
+		},
+		"standard pitch rounding" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [	
+				"3DAreas.*.PitchRounding.chromatic.roundInitialTouch = true",
+				"3DAreas.*.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.*.PitchRounding.chromatic.roundBasedOnXVelocity = true",
+			]
+		},
+		"pitch rounding with quartertones" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.*.PitchRounding.chromatic.roundInitialTouch = true",
+				"3DAreas.*.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.*.PitchRounding.chromatic.roundBasedOnXVelocity = true",
+			]
+		},
+		"enable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = true",
+			]		
+		},
+		"disable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = false",
+			]		
+		},
+		"enable zAxis" : {
+			"panel" : "config",
+			"x" : 55,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = true",
+			]		
+		},
+		"disable zAxis" : {
+			"panel" : "config",
+			"x" : 70,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = false",
+			]		
+		},
+		"transpose up" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.*.xAxis.start += 1200",
+				"3DAreas.*.xAxis.end += 1200"
+			]
+		},
+		"transpose down" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.*.xAxis.start -= 1200",
+				"3DAreas.*.xAxis.end -= 1200"
+			]
+		},
+		"send program change 1" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 1"
+			]
+ 		},
+ 		"send program change 2" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 2"
+			]
+ 		}
+	}
+}

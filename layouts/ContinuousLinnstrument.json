@@ -1,0 +1,188 @@
+/*
+Continuous xyz surface (like Continuum)
+*/
+{
+	"Version" : "1",
+
+	// overlay specification
+	"Panels" : {
+		"keybed" : {
+			"subpanels" : ["linnstrument1.1", "linnstrument1.2", "linnstrument1.3", "linnstrument1.4", "linnstrument1.5", "linnstrument1.6", "linnstrument1.7", "linnstrument1.8"],
+			"transitionArea" : {
+				"height" : 2, // in mm
+				"interpolateY" : true,
+				"interpolateZ" : true,
+				"additionalTransitTime" : 500 // in ms 
+			}
+		},
+		"config" : {
+			"subpanels" : "morph1"
+		}
+	},
+	"3DAreas" : {
+		"main" : {
+			"panel" : "keybed",
+			"x" : 0,
+			"y" : 0,
+			"width" : 960,
+			"height" : 130,
+			"midimode" : "MPE14bit",
+			"xAxis" : {
+				"event": "pitch",
+				"start" : "c2",
+				"end" : "c4",
+				"enabled" : true
+			},
+			"yAxis" : {
+				"event": "CC1",
+				"start" : "16383",
+				"end" : "0",
+				"enabled" : true
+			},
+			"zAxis" : {
+				"event": "channelAT",
+				"start" : "0",
+				"end" : "16383",
+				"enabled" : true
+			},
+			"sendVelocity" : true,
+			"PitchRounding" : {
+				"chromatic" : {
+					"x" : 0,
+					"y" : 0,
+					"width" : 960,
+					"height" : 130,
+					"keywidths" : [13.333],
+					"pitchOffsets" : [100],
+					"roundInitialTouch" : true,
+					"roundTimeWhenInside" : -1, // ms
+					"roundBasedOnXVelocity" : true
+				}
+			}
+		},
+	},
+	"Buttons" : {
+		"disable rounding" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.PitchRounding.chromatic.roundInitialTouch = false",
+				"3DAreas.main.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.chromatic.roundBasedOnXVelocity = false",
+			]
+		},
+		"standard pitch rounding" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [	
+				"3DAreas.main.PitchRounding.chromatic.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.chromatic.roundBasedOnXVelocity = true",
+				"3DAreas.main.PitchRounding.chromatic.keywidths = [13.333]",
+				"3DAreas.main.PitchRounding.chromatic.pitchOffsets = [100]"
+			]
+		},
+		"pitch rounding with quartertones" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.PitchRounding.chromatic.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.chromatic.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.chromatic.roundBasedOnXVelocity = true",
+				"3DAreas.main.PitchRounding.chromatic.keywidths = [6.667]",
+				"3DAreas.main.PitchRounding.chromatic.pitchOffsets = [50]"
+			]
+		},
+		"enable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = true",
+			]		
+		},
+		"disable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = false",
+			]		
+		},
+		"enable zAxis" : {
+			"panel" : "config",
+			"x" : 55,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = true",
+			]		
+		},
+		"disable zAxis" : {
+			"panel" : "config",
+			"x" : 70,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = false",
+			]		
+		},
+		"transpose up" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.xAxis.start += 1200",
+				"3DAreas.main.xAxis.end += 1200"
+			]
+		},
+		"transpose down" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.xAxis.start -= 1200",
+				"3DAreas.main.xAxis.end -= 1200"
+			]
+		},
+		"send program change 1" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 1"
+			]
+ 		},
+ 		"send program change 2" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 2"
+			]
+ 		}
+	}
+}

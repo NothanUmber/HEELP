@@ -1,0 +1,227 @@
+/*
+Hexagonal layout with semitones horizontally and wholetones diagonally
+*/
+{
+	"Version" : "1",
+
+	// overlay specification
+	"Panels" : {
+		"keybed" : {
+			"subpanels" : ["morph1", "morph2", "morph3", "morph4"], //virtual panel built out of 4 horizontally stacked physical panels
+			"transitionArea" : {
+				"width" : 5, // in mm
+				"interpolateX" : true,
+				"interpolateZ" : true,
+				"additionalTransitTime" : 500 // in ms 
+			}
+		},
+		"config" : {
+			"subpanels" : "morph5"
+		}
+	},
+	"3DAreas" : {
+		"main" : {
+			"panel" : "keybed",
+			"x" : 0,
+			"y" : 0,
+			"width" : 960,
+			"height" : 130,
+			"midimode" : "MPE7bit",
+			"xAxis" : {
+				"event": "pitch",
+				"start" : "c2",
+				"end" : "h7",
+				"enabled" : true
+			},
+			"yAxis" : {
+				"event": "pitch",
+				"start" : "c2",
+				"end" : "h6",
+				"enabled" : true
+			},
+			"zAxis" : {
+				"event": "channelAT",
+				"start" : "0",
+				"end" : "16383",
+				"enabled" : true
+			},
+			"sendVelocity" : true,
+			"PitchRounding" : {
+				"1" : {
+					"type" : "hexCornerVertical",
+					"x" : 0,
+					"y" : 0,
+					"width" : 960,
+					"height" : 21.667,
+					"keywidths" : [20],
+					"pitchOffsets" : [100],
+					"roundInitialTouch" : true,
+					"roundTimeWhenInside" : -1, // ms
+					"roundBasedOnXVelocity" : true
+				},
+				"2" : {
+					"template" : "1",
+					"x" : -10,
+					"y" : 10.834
+				},
+				"3" : {
+					"template" : "1",
+					"y" : 21.667
+				},
+				"4" : {
+					"template" : "1",
+					"x" : -10,
+					"y" : 32.501
+				},
+				"5" : {
+					"template" : "1",
+					"y" : 43.334
+				},
+				"6" : {
+					"template" : "1",
+					"x" : -10,
+					"y" : 54.168
+				},
+				"7" : {
+					"template" : "1",
+					"y" : 65.001
+				},
+				"8" : {
+					"template" : "1",
+					"x" : -10,
+					"y" : 75.835
+				},
+				"9" : {
+					"template" : "1",
+					"y" : 86.668
+				},
+				"10" : {
+					"template" : "1",
+					"x" : -10,
+					"y" : 97.502
+				},
+				"11" : {
+					"template" : "1",
+					"y" : 108.335
+				},
+				"12" : {
+					"template" : "1",
+					"x" : -10,
+					"y" : 119.169
+				}
+			}
+		}
+	},
+	"Buttons" : {
+		"disable rounding" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.PitchRounding.*.roundInitialTouch = false",
+				"3DAreas.main.PitchRounding.*.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.*.roundBasedOnXVelocity = false"
+			]
+		},
+		"standard pitch rounding" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [	
+				"3DAreas.main.PitchRounding.*.roundInitialTouch = true",
+				"3DAreas.main.PitchRounding.*.roundTimeWhenInside = -1",
+				"3DAreas.main.PitchRounding.*.roundBasedOnXVelocity = true"
+			]
+		},
+		"enable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = true",
+			]		
+		},
+		"disable yAxis" : {
+			"panel" : "config",
+			"x" : 40,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.yAxis.enable = false",
+			]		
+		},
+		"enable zAxis" : {
+			"panel" : "config",
+			"x" : 55,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = true",
+			]		
+		},
+		"disable zAxis" : {
+			"panel" : "config",
+			"x" : 70,
+			"y" : 10,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.zAxis.enable = false",
+			]		
+		},
+		"transpose up" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.xAxis.start += 1200",
+				"3DAreas.main.xAxis.end += 1200",
+				"3DAreas.main.yAxis.start += 1200",
+				"3DAreas.main.yAxis.end += 1200"
+			]
+		},
+		"transpose down" : {
+			"panel" : "config",
+			"x" : 25,
+			"y" : 25,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"3DAreas.main.xAxis.start -= 1200",
+				"3DAreas.main.xAxis.end -= 1200",
+				"3DAreas.main.yAxis.start -= 1200",
+				"3DAreas.main.yAxis.end -= 1200"
+			]
+		},
+		"send program change 1" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 1"
+			]
+ 		},
+ 		"send program change 2" : {
+			"panel" : "config",
+			"x" : 10,
+			"y" : 40,
+			"width" : 10,
+			"height" : 10,
+			"commands" : [
+				"System.programChange = 2"
+			]
+ 		}
+	}
+}
