@@ -33,10 +33,10 @@ Hexagonal layout with semitones horizontally and wholetones diagonally
 				"end" : "h7",
 				"enabled" : true
 			},
-			"yAxis" : {
+			"yAxis" : { // x and y pitches are added
 				"event": "pitch",
-				"start" : "c2",
-				"end" : "h6",
+				"start" : "c0",
+				"end" : "h5",
 				"enabled" : true
 			},
 			"zAxis" : {
@@ -57,7 +57,8 @@ Hexagonal layout with semitones horizontally and wholetones diagonally
 					"pitchOffsets" : [100],
 					"roundInitialTouch" : true,
 					"roundTimeWhenInside" : -1, // ms
-					"roundBasedOnXVelocity" : true
+					"roundBasedOnXVelocity" : true,
+					"roundBasedOnYVelocity" : true
 				},
 				"2" : {
 					"template" : "1",

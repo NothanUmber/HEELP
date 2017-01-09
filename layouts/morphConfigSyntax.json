@@ -39,15 +39,16 @@ Description of layout
 			"PitchRounding" : { // allows to define areas inside a 3DArea where pitch is rounded - either at initial touch, towards the destination pitch based on x/y/z velocity or time based (round to destination pitch within n ms)
 				"a rounding group name" : { //any name
 					"type" : "rectangular"|"hexCornerVertical"|"hexCornerHorizontal", // the rounding area can have recengular or hex cells (for hex the "pointy corner" can either be in vertical or horizontal direction)
-					"x" : 0, // start position (upper left corner) and width and height (lower right corner)
-					"y" : 0,
-					"width" : 960,
-					"height" : 21.667,
-					"keywidths" : [20], // width of one "key"-cell (is repeated for the entire width of the pitchrounding area)
-					"pitchOffsets" : [100], // pitch offset in cent between adjacent cells (is repeated for the entire width of the pitchrounding area)
-					"roundInitialTouch" : true, // round pitch to cell-pitch on initial touch. Default: true
-					"roundTimeWhenInside" : -1, // linearly interpolate current pitch to cell-pitch so it reaches cell-pitch in roundTimeWhenInside ms. -1 means no time-based rounding is happening. Default: -1
-					"roundBasedOnXVelocity" : true, // interpolate current pitch to cell-pitch according to x/y/z velocity vector. So if the velocity vector points to the opposite of the cell-pitch then no rounding is happening
+					"x" : n, // start position (upper left corner) and width and height (lower right corner)
+					"y" : n,
+					"width" : n,
+					"height" : n,
+					"keywidths" : [n1,n2,...], // width of one "key"-cell (is repeated for the entire width of the pitchrounding area)
+					"pitchOffsets" : [n1,n2,...], // pitch offset in cent between adjacent cells (is repeated for the entire width of the pitchrounding area)
+					"roundInitialTouch" : true|false, // round pitch to cell-pitch on initial touch. Default: true
+					"roundTimeWhenInside" : n, // linearly interpolate current pitch to cell-pitch so it reaches cell-pitch in roundTimeWhenInside ms. -1 means no time-based rounding is happening. Default: -1
+					"roundBasedOnXVelocity" : true|false, // interpolate current pitch to cell-pitch according to x/y velocity vector. So if the velocity vector points to the opposite of the cell-pitch then no rounding is happening
+					"roundBasedOnYVelocity" : true|false, // Default: false
 					"template" : "another pitch rounding area", // take over all settings that are not explicitly specified in this pitch rounding area from the indicated area. Default: ""
 				}
 			}
@@ -62,7 +63,9 @@ Description of layout
 			"height" : n,
 			"commands" : ["command 1", "command2",...] // list of assignments of e.g. 3DArea properties to new values.
 			//"=" assigns a new value, "-|+|*|/=" subtracts|adds|multiplies|divides the current value by a constant
-			// additional to 3DAreas the l-value System.programChange is available. Assigning a constant 0-127 to that value will trigger a program change
+			// additional to 3DAreas a number of System l-values are defined:
+			// * System.programChange: Assigning a constant 0-127 to that value will trigger a program change
+			// * System.load: loads the indicated configuration file
 		}
 	}
 }
